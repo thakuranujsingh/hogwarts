@@ -1,4 +1,4 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+This project is a Hogwarts-themed web application built using Next.js, React, Redux, and Material-UI. The application allows users to see the Hogwarts school data, teachers, students, real-time attendance updates, and auto-assigns teachers to students.
 
 ## Getting Started
 
@@ -6,12 +6,10 @@ First, run the development server:
 
 ```bash
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+#To run the tests, use the following command:
+npm run test
+#To run the end-to-end tests, use the following command:
+npm run cypress:open
 ```
 
 Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
