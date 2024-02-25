@@ -5,10 +5,11 @@ import { AttendanceRow } from "@/components/AttendanceRow";
 
 describe("Attendance", () => {
   it("renders page title", async () => {
-    render(<Attendance />);
+    const { container } = render(<Attendance />);
 
-    const headingElement = await screen.findByText("Attendance");
-    expect(headingElement).toBeInTheDocument();
+    const headingElement = container.getElementsByTagName("h3");
+
+    expect(headingElement[0].innerHTML).toContain("Attendance");
 
     const selectBox = await screen.findAllByRole("combobox");
     expect(selectBox).toHaveLength(8);

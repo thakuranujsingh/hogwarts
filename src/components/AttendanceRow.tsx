@@ -23,7 +23,6 @@ const AttendanceRowComponent: FC<IAttendanceRow> = ({ teacherId }) => {
         <Select
           value={teacher.attendance}
           onChange={(e) => {
-            console.log("event trigger", e);
             dispatch(
               updateAttendance({
                 id: teacher.id,
