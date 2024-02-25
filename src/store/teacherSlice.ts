@@ -1,29 +1,44 @@
-import { hogwartsHierarchy } from "@/models/teacher";
+import { hogwartsTeachers } from "@/models/teacher";
 import { IAttendance, ITeacher } from "@/types/hogwartsData";
-import { PayloadAction, createSlice } from "@reduxjs/toolkit";
+import {
+  PayloadAction,
+  createSlice,
+  createEntityAdapter,
+} from "@reduxjs/toolkit";
 import { RootState } from "./store";
 
-const initialState: ITeacher[] = hogwartsHierarchy;
+const teachersAdapter = createEntityAdapter({
+  selectId: (teacher: ITeacher) => teacher.id,
+
+  sortComparer: (a, b) => a.id.localeCompare(b.id),
+});
+
+const emptyState = teachersAdapter.getInitialState();
+
+const initialState = teachersAdapter.upsertMany(emptyState, hogwartsTeachers);
 
 export const teacherSlice = createSlice({
   name: "teachers",
-  initialState,
+  initialState: initialState,
   reducers: {
-    updateAttendence: (
+    updateAttendance: (
       state,
-      action: PayloadAction<{ index: number; attendence: IAttendance }>
+      action: PayloadAction<{ id: string; attendance: IAttendance }>
     ) => {
-      const teacher = { ...state[action.payload.index] };
-      teacher.attendance = action.payload.attendence;
-      state[action.payload.index] = { ...teacher }; // replace the original teacher in the state
+      const { id, attendance } = action.payload;
+      const teacher = state.entities[id];
+      if (teacher) {
+        teacher.attendance = attendance;
+        teachersAdapter.upsertOne(state, teacher);
+      }
     },
   },
 });
 
 // Action creators are generated for each case reducer function
-export const { updateAttendence } = teacherSlice.actions;
+export const { selectAll: selectAllTeachers, selectById: selectTeacherById } =
+  teachersAdapter.getSelectors((state: RootState) => state.teachers);
 
-export const selectTeacherById = (state: RootState, teacherId: string | null) =>
-  state.teachers.find((teacher) => teacher.id === teacherId);
+export const { updateAttendance } = teacherSlice.actions;
 
 export default teacherSlice.reducer;

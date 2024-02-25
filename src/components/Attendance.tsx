@@ -13,23 +13,21 @@ import { useAppSelector } from "@/store/hooks";
 import { AttendanceRow } from "./AttendanceRow";
 
 export const Attendance: FC = () => {
-  const teachers = useAppSelector((state) => state.teachers);
+  const teachers = useAppSelector((state) => state.teachers).ids;
 
   return (
-    <Box>
+    <Box data-testid="attendance">
       <Typography variant="h3">Attendance</Typography>
       <Table>
         <TableHead>
           <TableRow>
             <TableCell>Teacher</TableCell>
-            <TableCell>Attendence</TableCell>
+            <TableCell>Attendance</TableCell>
           </TableRow>
         </TableHead>
         <TableBody>
-          {teachers.map((teacher, index) => {
-            return (
-              <AttendanceRow key={teacher.id} index={index} teacher={teacher} />
-            );
+          {teachers.map((teacherId, index) => {
+            return <AttendanceRow key={teacherId} teacherId={teacherId} />;
           })}
         </TableBody>
       </Table>

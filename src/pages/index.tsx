@@ -1,7 +1,7 @@
 import Head from "next/head";
 import { Box, Container, Typography } from "@mui/material";
-import { CurrentSchedule } from "./components/CurrentSchedule";
-import { Attendance } from "./components/Attendance";
+import { CurrentSchedule } from "../components/CurrentSchedule";
+import { Attendance } from "../components/Attendance";
 
 export default function Home() {
   return (

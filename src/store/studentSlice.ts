@@ -1,77 +1,100 @@
 import { hogwartsStudents } from "@/models/student";
-import { IAttendance, IStudent, Subject } from "@/types/hogwartsData";
-import { createAsyncThunk, createSlice } from "@reduxjs/toolkit";
+import { IAttendance, IStudent } from "@/types/hogwartsData";
+import {
+  PayloadAction,
+  createAsyncThunk,
+  createDraftSafeSelector,
+  createEntityAdapter,
+  createSelector,
+  createSlice,
+} from "@reduxjs/toolkit";
 import { RootState } from "./store";
+import { selectAllTeachers, selectTeacherById } from "./teacherSlice";
+import { hierarchy } from "@/models/hierarchy";
 
-type autoAssignTeacherReqParm = {
-  index: number;
-  subject: Subject;
-};
+const studentsAdapter = createEntityAdapter({
+  selectId: (student: IStudent) => student.id,
+  sortComparer: (a, b) => a.id.localeCompare(b.id),
+});
+
+const emptyState = studentsAdapter.getInitialState();
+
+const initialState = studentsAdapter.upsertMany(emptyState, hogwartsStudents);
 
 export const autoAssignTeacherThunk = createAsyncThunk(
   "students/autoAssignTeacher",
-  async ({ index, subject }: autoAssignTeacherReqParm, thunkAPI) => {
-    const teachersState = (thunkAPI.getState() as RootState).teachers;
+  async (studentId: string, thunkAPI) => {
+    const state = thunkAPI.getState() as RootState;
+    const currentStudent = { ...selectStudentById(state, studentId) };
+    const subject = currentStudent.subject;
 
-    const standbyProfessorIndex = teachersState.findIndex(
-      (teacher) => teacher.subject == subject
-    );
+    // set default null auto assign teacher so we come back on current alocated teacher present
+    currentStudent.autoAssignTeacherId = null;
 
-    if (
-      teachersState[standbyProfessorIndex].attendance == IAttendance.PRESENT
-    ) {
-      const teacherId = teachersState[standbyProfessorIndex].id;
-      return {
-        index,
-        subject,
-        teacherId,
-      };
+    // get hierarchy teacher by subject
+    const hierarchyTeachers = hierarchy[subject].teachers;
+
+    const standByTeacher = hierarchyTeachers[0];
+
+    if (!currentStudent.allocatedTeacherId) {
+      currentStudent.allocatedTeacherId = standByTeacher.id;
     }
-
-    for (let i = standbyProfessorIndex; i >= 0; i--) {
-      if (teachersState[i].attendance == IAttendance.PRESENT) {
-        const teacherId = teachersState[i].id;
-        return {
-          index,
-          subject,
-          teacherId,
-        };
+    // auto assign teacher as per attendance change
+    if (
+      selectTeacherById(state, currentStudent.allocatedTeacherId).attendance ==
+      IAttendance.PRESENT
+    ) {
+      currentStudent.autoAssignTeacherId = currentStudent.allocatedTeacherId;
+    } else {
+      for (const t of hierarchyTeachers) {
+        if (selectTeacherById(state, t.id).attendance == IAttendance.PRESENT) {
+          currentStudent.autoAssignTeacherId = t.id;
+          break;
+        }
       }
     }
 
-    return { index, subject, teacherId: null };
+    return currentStudent;
   }
 );
 
-export const updateAllStudents = createAsyncThunk(
-  "students/updateAllStudentTeacherById",
+export const updateAllStudenOnAttandanceChangeThunk = createAsyncThunk(
+  "students/updateAllTeachers",
   async (_, thunkAPI) => {
-    const studentState = (thunkAPI.getState() as RootState).sdudents;
-    studentState.forEach((student, index) => {
-      thunkAPI.dispatch(
-        autoAssignTeacherThunk({ index, subject: student.subject })
-      );
+    const state = thunkAPI.getState() as RootState;
+    const students = selectAllStudents(state);
+    students.map((student) => {
+      thunkAPI.dispatch(autoAssignTeacherThunk(student.id));
     });
   }
 );
 
-const initialState: IStudent[] = hogwartsStudents;
-
 export const studentSlice = createSlice({
   name: "students",
   initialState,
-  reducers: {},
+  reducers: {
+    updateAssignTeacher: (state, action: PayloadAction<{ id: string }>) => {
+      const { id } = action.payload;
+
+      const student = state.entities[id];
+      const hierarchyTeachers = hierarchy[student.subject].teachers;
+      const standByTeacher = hierarchyTeachers[0];
+      if (!student.allocatedTeacherId) {
+        student.allocatedTeacherId = standByTeacher.id;
+      }
+      student.autoAssignTeacherId = standByTeacher.id;
+    },
+  },
   extraReducers: (builder) => {
     builder.addCase(autoAssignTeacherThunk.fulfilled, (state, action) => {
-      const index = action.payload.index;
-      if (state[index].allocatedTeacherId == null) {
-        state[index].allocatedTeacherId = action.payload.teacherId;
-      }
-      state[index].autoAssignTeacherId = action.payload.teacherId;
+      studentsAdapter.upsertOne(state, action.payload);
     });
   },
 });
 
 // Action creators are generated for each case reducer function
+
+export const { selectAll: selectAllStudents, selectById: selectStudentById } =
+  studentsAdapter.getSelectors((state: RootState) => state.students);
 
 export default studentSlice.reducer;

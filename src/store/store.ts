@@ -6,7 +6,7 @@ export const makeStore = () => {
   return configureStore({
     reducer: {
       teachers: teacherReducer,
-      sdudents: studentReducer,
+      students: studentReducer,
     },
   });
 };

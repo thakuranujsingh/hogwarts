@@ -21,7 +21,6 @@ export interface ITeacher {
   attendance: IAttendance;
   subject?: Subject;
   isStandByProfessor?: boolean;
-  parentHierarchyIndex?: number; // to help terivarse the array
 }
 
 export interface IStudent {

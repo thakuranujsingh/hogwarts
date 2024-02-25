@@ -12,9 +12,9 @@ import { useAppSelector } from "@/store/hooks";
 import { StudentRow } from "./StudentRow";
 
 export const CurrentSchedule: FC = () => {
-  const students = useAppSelector((state) => state.sdudents);
+  const students = useAppSelector((state) => state.students).ids;
   return (
-    <Box>
+    <Box data-testid="schedule">
       <Typography variant="h3">Current schedule</Typography>
       <Table>
         <TableHead>
@@ -25,10 +25,8 @@ export const CurrentSchedule: FC = () => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {students.map((student, index) => {
-            return (
-              <StudentRow index={index} key={student.id} student={student} />
-            );
+          {students.map((id, index) => {
+            return <StudentRow studentId={id} key={id} />;
           })}
         </TableBody>
       </Table>

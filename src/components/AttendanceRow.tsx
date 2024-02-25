@@ -1,32 +1,36 @@
-import { useAppDispatch } from "@/store/hooks";
-import { updateAllStudents } from "@/store/studentSlice";
-import { updateAttendence } from "@/store/teacherSlice";
+import { useAppDispatch, useAppSelector } from "@/store/hooks";
+import { updateAllStudenOnAttandanceChangeThunk } from "@/store/studentSlice";
+import { selectTeacherById, updateAttendance } from "@/store/teacherSlice";
+
 import { IAttendance, ITeacher } from "@/types/hogwartsData";
 import { MenuItem, Select, TableCell, TableRow } from "@mui/material";
 import { FC, memo } from "react";
 
 interface IAttendanceRow {
-  index: number;
-  teacher: ITeacher;
+  teacherId: string;
 }
 
-const AttendanceRowComponent: FC<IAttendanceRow> = ({ index, teacher }) => {
+const AttendanceRowComponent: FC<IAttendanceRow> = ({ teacherId }) => {
   const dispatch = useAppDispatch();
+  const teacher = useAppSelector((state) =>
+    selectTeacherById(state, teacherId)
+  );
 
   return (
-    <TableRow>
+    <TableRow data-testid={`teacher-${teacherId}`}>
       <TableCell>{teacher.name}</TableCell>
       <TableCell>
         <Select
           value={teacher.attendance}
           onChange={(e) => {
+            console.log("event trigger", e);
             dispatch(
-              updateAttendence({
-                index,
-                attendence: e.target.value as IAttendance,
+              updateAttendance({
+                id: teacher.id,
+                attendance: e.target.value as IAttendance,
               })
             );
-            dispatch(updateAllStudents());
+            dispatch(updateAllStudenOnAttandanceChangeThunk());
           }}
         >
           <MenuItem value={IAttendance.PRESENT}>{IAttendance.PRESENT}</MenuItem>
